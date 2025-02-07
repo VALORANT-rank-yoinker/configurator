@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,8 +12,8 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { Switch } from "./ui/switch";
 import { useEffect } from "react";
+import { Switch } from "./ui/switch";
 
 const formSchema = z.object({
   skin: z.boolean().describe("Skin for the selected weapon."),
@@ -65,10 +64,10 @@ export function TableForm({
 
   useEffect(() => {
     const { unsubscribe } = form.watch((value) => {
-      onChange?.(value as any);
+      onChange?.(value as z.infer<typeof formSchema>);
     });
     return () => unsubscribe();
-  }, [form.watch]);
+  }, [form, onChange]);
 
   return (
     <Form {...form}>
@@ -77,7 +76,7 @@ export function TableForm({
           <FormField
             key={key}
             control={form.control}
-            name={key as any}
+            name={key as keyof z.infer<typeof formSchema>}
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">

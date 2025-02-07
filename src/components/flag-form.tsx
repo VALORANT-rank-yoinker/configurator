@@ -62,10 +62,10 @@ export function FlagForm({
 
   useEffect(() => {
     const { unsubscribe } = form.watch((value) => {
-      onChange?.(value as any);
+      onChange?.(value as z.infer<typeof formSchema>);
     });
     return () => unsubscribe();
-  }, [form.watch]);
+  }, [form, onChange]);
 
   return (
     <Form {...form}>
@@ -74,7 +74,7 @@ export function FlagForm({
           <FormField
             key={key}
             control={form.control}
-            name={key as any}
+            name={key as keyof z.infer<typeof formSchema>}
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">

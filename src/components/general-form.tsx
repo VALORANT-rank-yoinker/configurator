@@ -86,7 +86,7 @@ export function GeneralForm({
       if (result.success) onChange?.(result.data);
     });
     return () => unsubscribe();
-  }, [form.watch]);
+  }, [form, onChange]);
 
   return (
     <Form {...form}>
