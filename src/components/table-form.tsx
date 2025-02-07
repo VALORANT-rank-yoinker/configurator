@@ -60,6 +60,7 @@ export function TableForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: DEFAULT_CONFIG,
+    mode: "onChange",
   });
 
   useEffect(() => {

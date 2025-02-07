@@ -1,9 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Form,
   FormControl,
@@ -13,23 +23,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@radix-ui/react-popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "cmdk";
-import { Check, ChevronsUpDown } from "lucide-react";
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Input } from "./ui/input";
 import { useEffect } from "react";
-import { Button } from "./ui/button";
 
 const WEAPONS = [
   "Vandal",
@@ -58,47 +59,47 @@ const weapons = WEAPONS.map((weapon) => ({
   value: weapon,
 }));
 
-const formSchema = z.object({
-  weapon: z.enum(WEAPONS).describe("Weapon to show skin for."),
-  chat_limit: z.number().min(1).max(100).describe("Chat limit"),
+const FormSchema = z.object({
+  weapon: z.enum(WEAPONS),
+  chat_limit: z.coerce.number().int().positive().min(1).max(100).default(5),
 });
 
-export const DEFAULT_CONFIG: z.infer<typeof formSchema> = {
-  weapon: "Vandal",
+export const DEFAULT_CONFIG = {
+  weapon: WEAPONS[0],
   chat_limit: 5,
-};
-
-const LABEL_MAPPING: Record<keyof z.infer<typeof formSchema>, string> = {
-  weapon: "Weapon",
-  chat_limit: "Chat Limit",
 };
 
 export function GeneralForm({
   onChange,
 }: {
-  onChange?: (value: z.infer<typeof formSchema>) => void;
+  onChange?: (value: z.infer<typeof FormSchema>) => void;
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
     defaultValues: DEFAULT_CONFIG,
+    mode: "onChange",
   });
 
   useEffect(() => {
     const { unsubscribe } = form.watch((value) => {
-      onChange?.(value as any);
+      const result = FormSchema.safeParse(value);
+      if (result.success) onChange?.(result.data);
     });
     return () => unsubscribe();
   }, [form.watch]);
 
   return (
     <Form {...form}>
-      <form className="w-full">
+      <form
+        className="w-full grid grid-cols-1 md:grid-cols-2 gap-2"
+        onSubmit={(e) => e.preventDefault()}
+      >
         <FormField
           control={form.control}
           name="weapon"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{LABEL_MAPPING.weapon}</FormLabel>
+              <FormLabel>Weapon</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -112,7 +113,7 @@ export function GeneralForm({
                     >
                       {field.value
                         ? weapons.find((w) => w.value === field.value)?.label
-                        : "Select Weapon"}
+                        : "Select weapon"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -121,14 +122,17 @@ export function GeneralForm({
                   <Command>
                     <CommandInput placeholder="Search weapon..." />
                     <CommandList>
-                      <CommandEmpty>No Weapon found.</CommandEmpty>
+                      <CommandEmpty>No language found.</CommandEmpty>
                       <CommandGroup>
                         {weapons.map((w) => (
                           <CommandItem
                             value={w.label}
                             key={w.value}
                             onSelect={() => {
-                              form.setValue("weapon", w.value);
+                              form.setValue(
+                                "weapon",
+                                w.value as (typeof WEAPONS)[number]
+                              );
                             }}
                           >
                             {w.label}
@@ -148,7 +152,24 @@ export function GeneralForm({
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                {formSchema.shape.weapon.description}
+                Only skins for this weapon will be shown in the table.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="chat_limit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chat Limit</FormLabel>
+              <FormControl className="max-w-[200px]">
+                <Input type="number" min={1} max={100} {...field} />
+              </FormControl>
+              <FormDescription>
+                How many chat messages to display at once.
               </FormDescription>
               <FormMessage />
             </FormItem>
