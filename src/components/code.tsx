@@ -1,4 +1,9 @@
+"use client";
+
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "./ui/button";
 import {
   Tooltip,
@@ -6,8 +11,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export function Code({ code, filename }: { code: string; filename?: string }) {
   const [copied, setCopied] = useState(false);
@@ -20,7 +23,7 @@ export function Code({ code, filename }: { code: string; filename?: string }) {
   };
 
   return (
-    <div className="relative bg-neutral-900 text-sm text-neutral-300 rounded-lg overflow-hidden">
+    <div className="relative overflow-hidden rounded-lg bg-neutral-900 text-sm text-neutral-300">
       {filename && <div className="bg-neutral-800 p-4">{filename}</div>}
 
       <pre className="px-6 py-4">
@@ -43,10 +46,6 @@ export function Code({ code, filename }: { code: string; filename?: string }) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      {/* 
-      <Button className="absolute top-2 right-2" variant="ghost">
-        <CopyIcon />
-      </Button> */}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -23,75 +24,46 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { WEAPONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { Input } from "./ui/input";
-import { useEffect } from "react";
 
-const WEAPONS = [
-  "Vandal",
-  "Phantom",
-  "Bulldog",
-  "Guardian",
-  "Judge",
-  "Bucky",
-  "Odin",
-  "Ares",
-  "Operator",
-  "Outlaw",
-  "Marshal",
-  "Spectre",
-  "Stinger",
-  "Ghost",
-  "Sheriff",
-  "Shorty",
-  "Frenzy",
-  "Classic",
-  "Melee",
-] as const;
+import { GeneralConfigSchema } from "./schema";
+import { useConfigStore } from "./store";
+
+type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 
 const weapons = WEAPONS.map((weapon) => ({
   label: weapon,
   value: weapon,
 }));
 
-const FormSchema = z.object({
-  weapon: z.enum(WEAPONS),
-  chat_limit: z.coerce.number().int().positive().min(1).max(100).default(5),
-});
-
-export const DEFAULT_CONFIG = {
-  weapon: WEAPONS[0],
-  chat_limit: 5,
-};
-
-export function GeneralForm({
-  onChange,
-}: {
-  onChange?: (value: z.infer<typeof FormSchema>) => void;
-}) {
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: DEFAULT_CONFIG,
+export function GeneralForm() {
+  const form = useForm<GeneralConfig>({
+    resolver: zodResolver(GeneralConfigSchema),
+    defaultValues: GeneralConfigSchema.parse({}),
     mode: "onChange",
   });
 
+  const { update } = useConfigStore();
+  const { watch } = form;
+
   useEffect(() => {
-    const { unsubscribe } = form.watch((value) => {
-      const result = FormSchema.safeParse(value);
-      if (result.success) onChange?.(result.data);
+    const { unsubscribe } = watch((value) => {
+      update(value);
     });
     return () => unsubscribe();
-  }, [form, onChange]);
+  }, [watch, update]);
 
   return (
     <Form {...form}>
       <form
-        className="w-full grid grid-cols-1 md:grid-cols-2 gap-2"
+        className="grid w-full grid-cols-1 gap-2 md:grid-cols-2"
         onSubmit={(e) => e.preventDefault()}
       >
         <FormField
@@ -108,7 +80,7 @@ export function GeneralForm({
                       role="combobox"
                       className={cn(
                         "w-[200px] justify-between",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       {field.value
@@ -122,7 +94,7 @@ export function GeneralForm({
                   <Command>
                     <CommandInput placeholder="Search weapon..." />
                     <CommandList>
-                      <CommandEmpty>No language found.</CommandEmpty>
+                      <CommandEmpty>No weapon found.</CommandEmpty>
                       <CommandGroup>
                         {weapons.map((w) => (
                           <CommandItem
@@ -131,7 +103,7 @@ export function GeneralForm({
                             onSelect={() => {
                               form.setValue(
                                 "weapon",
-                                w.value as (typeof WEAPONS)[number]
+                                w.value as (typeof WEAPONS)[number],
                               );
                             }}
                           >
@@ -141,7 +113,7 @@ export function GeneralForm({
                                 "ml-auto",
                                 w.value === field.value
                                   ? "opacity-100"
-                                  : "opacity-0"
+                                  : "opacity-0",
                               )}
                             />
                           </CommandItem>
@@ -152,7 +124,7 @@ export function GeneralForm({
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                Only skins for this weapon will be shown in the table.
+                {GeneralConfigSchema.shape.weapon.description}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -166,10 +138,18 @@ export function GeneralForm({
             <FormItem>
               <FormLabel>Chat Limit</FormLabel>
               <FormControl className="max-w-[200px]">
-                <Input type="number" min={1} max={100} {...field} />
+                <Input
+                  type="number"
+                  {...field}
+                  {...form.register("chat_limit", {
+                    valueAsNumber: true,
+                    min: 1,
+                    max: 100,
+                  })}
+                />
               </FormControl>
               <FormDescription>
-                How many chat messages to display at once.
+                {GeneralConfigSchema.shape.chat_limit.description}
               </FormDescription>
               <FormMessage />
             </FormItem>
